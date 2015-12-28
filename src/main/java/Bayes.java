@@ -1,67 +1,82 @@
-import common.IrisModel;
+import common.Model;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * Created by punksta on 28.12.15.
  * http://mobiumapps.com/
  */
-public class Bayes {
+public class Bayes<E extends Enum<E>, M extends Model<E>> {
     //class ->  featureNumber -> (normal distribution args)}
-    private final EnumMap<IrisModel.Type, Map<Integer, NormalDistribution>> classFeatureCharacteristics;
+    private final EnumMap<E, Map<Integer, NormalDistribution>> classFeatureCharacteristics;
 
     //class -> {iris of class}
-    private final EnumMap<IrisModel.Type, List<IrisModel>> sample;
+    private final EnumMap<E, List<M>> sample;
 
     //total learning sample size
     private final int totalCount;
 
-    public Bayes(List<IrisModel> learning) {
+
+    private final Class<E> modelClass;
+
+    private final int featureCount;
+
+    public Bayes(List<M> learning) {
+        featureCount = learning.get(0).featureCount();
+        modelClass = learning.get(0).modelClass().getDeclaringClass();
+        totalCount = learning.size();
+
         sample = getSample(learning);
         classFeatureCharacteristics = buildTable(sample);
-        totalCount = learning.size();
     }
 
-    private EnumMap<IrisModel.Type, List<IrisModel>> getSample(List<IrisModel> models) {
-        EnumMap<IrisModel.Type, List<IrisModel>> enumMap = new EnumMap<>(IrisModel.Type.class);
-        for (IrisModel.Type t : IrisModel.Type.values())
-            enumMap.put(t, models.parallelStream().filter(m -> m.type.equals(t)).collect(Collectors.toList()));
+    private EnumMap<E, List<M>> getSample(List<M> models) {
+        E values = models.get(0).modelClass();
+
+        EnumMap<E, List<M>> enumMap = new EnumMap<>(values.getDeclaringClass());
+
+        for (E t : values.getDeclaringClass().getEnumConstants())
+            enumMap.put(t, models.parallelStream().filter(m -> m.modelClass().equals(t)).collect(Collectors.toList()));
         return enumMap;
     }
 
-    private EnumMap<IrisModel.Type, Map<Integer, NormalDistribution>> buildTable(EnumMap<IrisModel.Type, List<IrisModel>> sample) {
-        EnumMap<IrisModel.Type, Map<Integer, NormalDistribution>> classWithFeatures = new EnumMap<>(IrisModel.Type.class);
+    private EnumMap<E, Map<Integer, NormalDistribution>> buildTable(EnumMap<E, List<M>> sample) {
 
-        for (Map.Entry<IrisModel.Type, List<IrisModel>> e :sample.entrySet()) {
-            Map<Integer, NormalDistribution> featureWithEvDe = new HashMap<>(IrisModel.featureSize());
+        EnumMap<E, Map<Integer, NormalDistribution>> classWithFeatures = new EnumMap<>(modelClass);
 
-            for (int fNumber = 0; fNumber < IrisModel.featureSize(); fNumber++) {
+        for (Map.Entry<E, List<M>> entry : sample.entrySet()) {
+            Map<Integer, NormalDistribution> featureWithEvDe = new HashMap<>(featureCount);
+
+            for (int fNumber = 0; fNumber < featureCount; fNumber++) {
                 final int finalFNumber = fNumber;
-                List<Double> randomValue = e.getValue().parallelStream().map(v -> v.getFeature(finalFNumber)).collect(Collectors.toList());
-                double expectedValue = NormalDistribution.getDiscreetExpectedValue(randomValue);
-                double dispersion = NormalDistribution.getDiscreetVariance(randomValue, expectedValue);
+                List<Double> randomValue = entry.getValue().parallelStream().map(v -> v.getFeature(finalFNumber)).collect(Collectors.toList());
+                double e = NormalDistribution.getDiscreteExpectedValue(randomValue);
+                double v = NormalDistribution.getDiscreteVariance(randomValue, e);
 
-                featureWithEvDe.put(fNumber, new NormalDistribution(expectedValue, dispersion));
+                featureWithEvDe.put(fNumber, new NormalDistribution(e, v));
             }
 
-            classWithFeatures.put(e.getKey(), featureWithEvDe);
+            classWithFeatures.put(entry.getKey(), featureWithEvDe);
         }
         return classWithFeatures;
     }
 
 
-    public IrisModel.Type getType(double[] features) {
+    public E getType(double[] features) {
         double pMax = 0;
-        IrisModel.Type maxType = null;
+        E maxType = null;
 
-        for (Map.Entry<IrisModel.Type, Map<Integer, NormalDistribution>>  e : classFeatureCharacteristics.entrySet()) {
-            IrisModel.Type type = e.getKey();
+        for (Map.Entry<E, Map<Integer, NormalDistribution>>  e : classFeatureCharacteristics.entrySet()) {
+            E type = e.getKey();
 
             double pC = ((double) sample.get(type).size()) / totalCount;
 
             double pCurrent = pC;
-            for (int i = 0; i < IrisModel.featureSize(); i++) {
+            for (int i = 0; i < featureCount; i++) {
                 pCurrent *= e.getValue().get(i).getProbability(features[i]);
             }
             if (maxType == null || pMax < pCurrent) {

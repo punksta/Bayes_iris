@@ -25,7 +25,6 @@ class NormalDistribution {
 
 
     /**
-     * @param x
      * @return  P {X = x}: X ~ N(variance, expectedValue)
      */
     public double getProbability(double x) {
@@ -40,8 +39,8 @@ class NormalDistribution {
      * @param expectedValue of X
      * @return E[X]
      */
-    public static double getDiscreetVariance(List<Double> radonValueValues, double expectedValue) {
-        return getDiscreetExpectedValue(radonValueValues.stream().map(v -> v*v).collect(Collectors.toList()))
+    public static double getDiscreteVariance(List<Double> radonValueValues, double expectedValue) {
+        return getDiscreteExpectedValue(radonValueValues.stream().map(v -> v*v).collect(Collectors.toList()))
                 - expectedValue * expectedValue;
     }
 
@@ -50,7 +49,7 @@ class NormalDistribution {
      * @param radonValueValues values of random value X
      * @return D[X]
      */
-    public static double getDiscreetExpectedValue(List<Double> radonValueValues) {
+    public static double getDiscreteExpectedValue(List<Double> radonValueValues) {
         Map<Double, Integer> count = new HashMap<>();
         for (double v : radonValueValues) {
             if (count.containsKey(v))

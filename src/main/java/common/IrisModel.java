@@ -6,7 +6,7 @@ import java.util.stream.Stream;
  * Created by punksta on 15.10.15.
  * http://mobiumapps.com/
  */
-public class IrisModel implements Cloneable{
+public class IrisModel implements Cloneable, Model<IrisModel.Type> {
     public double sepalLength;
     public double sepalWidth;
     public double petalLength;
@@ -61,7 +61,7 @@ public class IrisModel implements Cloneable{
     }
 
     public static int featureSize() {
-        return 4;
+        return new IrisModel(0,0,0,0, Type.setosa).featureCount();
     }
 
     public double getFeature(int number) {
@@ -72,5 +72,15 @@ public class IrisModel implements Cloneable{
             case 3: return sepalWidth;
             default: throw new IllegalArgumentException("AHTUGN!!!");
         }
+    }
+
+    @Override
+    public int featureCount() {
+        return 4;
+    }
+
+    @Override
+    public Type modelClass() {
+        return type;
     }
 }

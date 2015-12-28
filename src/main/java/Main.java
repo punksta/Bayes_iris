@@ -34,7 +34,7 @@ public class Main {
         List<IrisModel> learning = LBUtil.getElemsByIndex(partition.learningIndex, models);
         List<IrisModel> testing = LBUtil.getElemsByIndex(partition.testIndex, models);
 
-        Bayes bayes = new Bayes(learning);
+        Bayes<IrisModel.Type, IrisModel> bayes = new Bayes<>(learning);
 
         int currentAnswers = 0;
 
