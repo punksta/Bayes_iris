@@ -10,45 +10,51 @@ import java.util.stream.Collectors;
  * Created by punksta on 28.12.15.
  * http://mobiumapps.com/
  */
-public class Bayes<E extends Enum<E>, M extends Model<E>> {
+
+/**
+ * Bayes naive algorithm
+ * @param <C> type of model class
+ * @param <M> type of model
+ */
+public class Bayes<C extends Enum<C>, M extends Model<C>> {
     //class ->  featureNumber -> (normal distribution args)}
-    private final EnumMap<E, Map<Integer, NormalDistribution>> classFeatureCharacteristics;
+    private final EnumMap<C, Map<Integer, NormalDistribution>> classFeatureCharacteristics;
 
     //class -> {iris of class}
-    private final EnumMap<E, List<M>> sample;
+    private final EnumMap<C, List<M>> sample;
 
     //total learning sample size
     private final int totalCount;
 
 
-    private final Class<E> modelClass;
+    private final Class<C> modelClassType;
 
     private final int featureCount;
 
     public Bayes(List<M> learning) {
         featureCount = learning.get(0).featureCount();
-        modelClass = learning.get(0).modelClass().getDeclaringClass();
+        modelClassType = learning.get(0).modelClass().getDeclaringClass();
         totalCount = learning.size();
 
         sample = getSample(learning);
         classFeatureCharacteristics = buildTable(sample);
     }
 
-    private EnumMap<E, List<M>> getSample(List<M> models) {
-        E values = models.get(0).modelClass();
+    private EnumMap<C, List<M>> getSample(List<M> models) {
+        C values = models.get(0).modelClass();
 
-        EnumMap<E, List<M>> enumMap = new EnumMap<>(values.getDeclaringClass());
+        EnumMap<C, List<M>> enumMap = new EnumMap<>(values.getDeclaringClass());
 
-        for (E t : values.getDeclaringClass().getEnumConstants())
+        for (C t : values.getDeclaringClass().getEnumConstants())
             enumMap.put(t, models.parallelStream().filter(m -> m.modelClass().equals(t)).collect(Collectors.toList()));
         return enumMap;
     }
 
-    private EnumMap<E, Map<Integer, NormalDistribution>> buildTable(EnumMap<E, List<M>> sample) {
+    private EnumMap<C, Map<Integer, NormalDistribution>> buildTable(EnumMap<C, List<M>> sample) {
 
-        EnumMap<E, Map<Integer, NormalDistribution>> classWithFeatures = new EnumMap<>(modelClass);
+        EnumMap<C, Map<Integer, NormalDistribution>> classWithFeatures = new EnumMap<>(modelClassType);
 
-        for (Map.Entry<E, List<M>> entry : sample.entrySet()) {
+        for (Map.Entry<C, List<M>> entry : sample.entrySet()) {
             Map<Integer, NormalDistribution> featureWithEvDe = new HashMap<>(featureCount);
 
             for (int fNumber = 0; fNumber < featureCount; fNumber++) {
@@ -66,12 +72,12 @@ public class Bayes<E extends Enum<E>, M extends Model<E>> {
     }
 
 
-    public E getType(double[] features) {
+    public C getType(double[] features) {
         double pMax = 0;
-        E maxType = null;
+        C maxType = null;
 
-        for (Map.Entry<E, Map<Integer, NormalDistribution>>  e : classFeatureCharacteristics.entrySet()) {
-            E type = e.getKey();
+        for (Map.Entry<C, Map<Integer, NormalDistribution>>  e : classFeatureCharacteristics.entrySet()) {
+            C type = e.getKey();
 
             double pC = ((double) sample.get(type).size()) / totalCount;
 
