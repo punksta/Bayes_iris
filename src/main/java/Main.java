@@ -1,7 +1,13 @@
-import common.*;
+import common.IrisModel;
+import common.IrisProvider;
+import common.LBUtil;
+import common.Partition;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Created by punksta on 28.12.15.
@@ -11,20 +17,26 @@ public class Main {
     public static void main(String[] args) {
         List<IrisModel> iris = new IrisProvider().getRecords();
 
-        for (int i = 3; i < 99; i++) {
-            float learingProcent = (float) i / 100;
-            int learningSize = (int) (iris.size() * learingProcent);
-            System.out.println(learningSize + " " + getAverageTest(iris, learningSize, 350));
-        }
+        Long l = System.currentTimeMillis();
+
+        String pointsArray =
+                IntStream.range(1, 120)
+                        .mapToObj(lerningSize-> {
+                            double result = getAverageTest(iris, lerningSize, 1500, true);
+                            return "(" + lerningSize + "," +result + "),";
+                        })
+                        .collect(Collectors.joining());
+
+        System.out.println("line( [" + pointsArray + "], color= 'red')");
+
+        System.out.print(System.currentTimeMillis() - l);
+
     }
 
 
-    public static double getAverageTest(List<IrisModel> models, int learning, int times) {
-        double sum = 0;
-        for (int i = 0; i < times; i++) {
-            sum += test(models, learning);
-        }
-        return sum / times;
+    public static double getAverageTest(List<IrisModel> models, int learning, int times, boolean parralel) {
+        return (parralel ? IntStream.range(0, times).parallel() : IntStream.range(0, times))
+                .mapToDouble(i -> test(parralel ? new ArrayList<>(models) : models, learning)).sum() / times;
     }
 
     public static double test(List<IrisModel> models, int learningSize) {
