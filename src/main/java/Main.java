@@ -21,6 +21,7 @@ public class Main {
 
         String pointsArray =
                 IntStream.range(1, 120)
+                        .parallel()
                         .mapToObj(lerningSize-> {
                             double result = getAverageTest(iris, lerningSize, 1500, true);
                             return "(" + lerningSize + "," +result + "),";
@@ -28,9 +29,7 @@ public class Main {
                         .collect(Collectors.joining());
 
         System.out.println("line( [" + pointsArray + "], color= 'red')");
-
         System.out.print(System.currentTimeMillis() - l);
-
     }
 
 
@@ -51,7 +50,7 @@ public class Main {
         int currentAnswers = 0;
 
         for (IrisModel m : testing)
-            if (bayes.getType(m.getFeatures()).equals(m.type))
+            if (bayes.getModelType(m.getFeatures()).equals(m.type))
                 currentAnswers++;
 
         return ((double) currentAnswers) / testing.size();

@@ -17,10 +17,10 @@ import java.util.stream.Collectors;
  * @param <M> type of model
  */
 public class Bayes<C extends Enum<C>, M extends Model<C>> {
-    //class ->  featureNumber -> (normal distribution args)}
+    //some class ->  featureNumber -> (normal distribution of feature in the class)}
     private final EnumMap<C, Map<Integer, NormalDistribution>> classFeatureCharacteristics;
 
-    //class -> {iris of class}
+    //some class -> {iris of the class}
     private final EnumMap<C, List<M>> sample;
 
     //total learning sample size
@@ -28,29 +28,30 @@ public class Bayes<C extends Enum<C>, M extends Model<C>> {
 
 
     private final Class<C> modelClassType;
+    private final C[] classValueSet;
 
     private final int featureCount;
 
     public Bayes(List<M> learning) {
         featureCount = learning.get(0).featureCount();
         modelClassType = learning.get(0).modelClass().getDeclaringClass();
+        classValueSet = modelClassType.getEnumConstants();
+
         totalCount = learning.size();
 
         sample = getSample(learning);
-        classFeatureCharacteristics = buildTable(sample);
+        classFeatureCharacteristics = buildNormalDistributionTable(sample);
+
     }
 
     private EnumMap<C, List<M>> getSample(List<M> models) {
-        C values = models.get(0).modelClass();
-
-        EnumMap<C, List<M>> enumMap = new EnumMap<>(values.getDeclaringClass());
-
-        for (C t : values.getDeclaringClass().getEnumConstants())
-            enumMap.put(t, models.parallelStream().filter(m -> m.modelClass().equals(t)).collect(Collectors.toList()));
+        EnumMap<C, List<M>> enumMap = new EnumMap<>(modelClassType);
+        for (C t : classValueSet)
+            enumMap.put(t, models.stream().filter(m -> m.modelClass().equals(t)).collect(Collectors.toList()));
         return enumMap;
     }
 
-    private EnumMap<C, Map<Integer, NormalDistribution>> buildTable(EnumMap<C, List<M>> sample) {
+    private EnumMap<C, Map<Integer, NormalDistribution>> buildNormalDistributionTable(EnumMap<C, List<M>> sample) {
 
         EnumMap<C, Map<Integer, NormalDistribution>> classWithFeatures = new EnumMap<>(modelClassType);
 
@@ -59,7 +60,7 @@ public class Bayes<C extends Enum<C>, M extends Model<C>> {
 
             for (int fNumber = 0; fNumber < featureCount; fNumber++) {
                 final int finalFNumber = fNumber;
-                List<Double> randomValue = entry.getValue().parallelStream().map(v -> v.getFeature(finalFNumber)).collect(Collectors.toList());
+                List<Double> randomValue = entry.getValue().stream().map(v -> v.getFeature(finalFNumber)).collect(Collectors.toList());
                 double e = NormalDistribution.getDiscreteExpectedValue(randomValue);
                 double v = NormalDistribution.getDiscreteVariance(randomValue, e);
 
@@ -72,7 +73,7 @@ public class Bayes<C extends Enum<C>, M extends Model<C>> {
     }
 
 
-    public C getType(double[] features) {
+    public C getModelType(double[] features) {
         double pMax = 0;
         C maxType = null;
 
