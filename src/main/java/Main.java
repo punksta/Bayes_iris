@@ -1,3 +1,4 @@
+import bayes.Bayes;
 import common.IrisModel;
 import common.IrisProvider;
 import common.LBUtil;

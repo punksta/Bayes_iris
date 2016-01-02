@@ -1,4 +1,4 @@
-import common.Model;
+package bayes;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
  */
 
 /**
- * Bayes naive algorithm
+ * bayes.Bayes naive algorithm
  * @param <C> type of model class
  * @param <M> type of model
  */
-public class Bayes<C extends Enum<C>, M extends Model<C>> {
+public class Bayes<C extends Enum<C>, M extends BayesModel<C>> {
     //some class ->  featureNumber -> (normal distribution of feature in the class)}
     private final EnumMap<C, Map<Integer, NormalDistribution>> classFeatureCharacteristics;
 

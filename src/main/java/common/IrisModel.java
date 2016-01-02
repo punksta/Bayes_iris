@@ -1,12 +1,14 @@
 package common;
 
+import bayes.BayesModel;
+
 import java.util.stream.Stream;
 
 /**
  * Created by punksta on 15.10.15.
  * http://mobiumapps.com/
  */
-public class IrisModel implements Cloneable, Model<IrisModel.Type> {
+public class IrisModel implements Cloneable, BayesModel<IrisModel.Type> {
     public double sepalLength;
     public double sepalWidth;
     public double petalLength;
